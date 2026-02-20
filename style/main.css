@@ -1,0 +1,104 @@
+
+@font-face {
+    font-family: 'SF2';
+    src: url('../assets/fonts/street-fighter-ii-large-colour.colr.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+*{
+    font-family: 'SF2', sans-serif;
+}
+
+:root {
+    --width: 1152px;
+    --height: 672px;
+  }
+
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas{
+    position: absolute;
+    width: var(--width);
+    height: var(--height);
+}
+
+.screen{
+    display: flex;
+    justify-content: center;
+    width: var(--width);
+    height: var(--height);
+    background-color: #202020;
+}
+
+.top{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    position: relative;
+    top: 20px;
+    width: 90%;
+    height: 15%;
+    gap: 10px;
+}
+
+.score{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    font-size: 2em;
+    color: #f9985a;
+    font-weight: bold;
+}
+
+.bar-energy{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    font-size: 2.5em;
+    color: rgb(221, 69, 9);
+    font-weight: bold;
+}
+
+.bar-rigth{
+    display: flex;
+    justify-content: end;
+}
+
+.bar{
+    height: 30px;
+    width: 50%;
+    background-color: #fefe00;
+    border-radius: 5px;
+}
+
+.bar-name{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    color: #f9985a;
+    font-weight: bold;
+    font-size: 2em;
+}
+
+.blood{
+    transition: width 1s ease-in-out; 
+    border-radius: 5px;
+    height: 100%;
+    background-color: rgb(221, 69, 9);
+}
+
+#p1-blood, #p2-blood{
+    width: 50%;
+}
+
+#time{
+    font-size: 1.5em;
+}
