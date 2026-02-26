@@ -1,3 +1,56 @@
+class SF2{
+    constructor(id,p1,p2='Ken'){
+        this.p1_score = 0
+        this.p2_score = 0
+        this.hi_score = 0
+        this.time = 99
+        this.p1 = p1
+        this.p2 = p2
+
+        this.setBlood = (P,val)=>{
+            document.getElementById(`p${P}-blood`).style.width = `${val}%`
+        }
+
+        this.makeScreen()
+
+        document.getElementById(id).appendChild(this.screen)
+    }
+}
+
+SF2.prototype.makeScreen = function(){
+    this.screen = document.createElement('div')
+    this.screen.className =  'screen'
+
+    const top = document.createElement('div')
+    this.screen.appendChild(top)
+    top.className =  'top'
+
+    const score = document.createElement('div')
+    top.appendChild(score)
+    score.className =  'score'
+    score.innerHTML = '<div>1P</div><div id="p1-score">000000</div><div>HI</div><div id="hi-score">000000</div><div>2P</div><div id="p2-score">000000</div>'
+
+    const bar_energy = document.createElement('div')
+    top.appendChild(bar_energy)
+    bar_energy.className =  'bar-energy'
+    bar_energy.innerHTML = '<div class="bar"><div id="p1-blood" class="blood"></div></div><div class="KO">KO</div><div class="bar bar-rigth"><div id="p2-blood" class="blood"></div></div>'
+
+    const bar_name = document.createElement('div')
+    top.appendChild(bar_name)
+    bar_name.className =  'bar-name'
+    bar_name.innerHTML = '<div id="p1-name"></div><div id="time">00</div><div id="p2-name"></div>'
+
+    this.canvas = document.createElement('canvas')
+    this.canvas.id = 'cnvScreen'
+
+    this.screen.appendChild(this.canvas)
+}
+
+SF2.prototype.setScore = function(){
+   this.screen.querySelector('#p1-score').innerHTML = this.p1_score.toString().padStart(6,0) 
+   this.screen.querySelector('#p2-score').innerHTML = this.p2_score.toString().padStart(6,0) 
+}
+
 class SF2_Player{
     constructor(){
         this.side = 0
@@ -6,7 +59,7 @@ class SF2_Player{
         this.status = 'idle'
         this.frame = 2
         this.frame_direction = 0
-        this.scale = 0.7
+        this.scale = 1
         this.speed_animate = 100
         this.spritejson = [{'idle':[{"x":0,"y":0,"w":60,"h":100}]}]
     }
@@ -29,6 +82,10 @@ SF2_Player.prototype.frameMotion = function(){
         player.frame += player.frame < player.spritejson[player.status].length-1 ? (player.frame_direction ? -1 : 1 ): 0
     }
 
+    function jump(player){
+//        player.pos[1] -= 10
+    }
+
     switch(this.status){
         case 'idle':
             coil(player)
@@ -41,9 +98,11 @@ SF2_Player.prototype.frameMotion = function(){
         break
         case 'jump_spin':
             repeat(player)
+            jump(player)
         break
         case 'jump':
             repeat(player)
+            jump(player)
         break           
     }
     this.draw()
@@ -81,6 +140,7 @@ class Ryu extends SF2_Player {
         this.img.src =  'assets/sprites/Ryu.png'
         this.spritejson = fetch('assets/sprites/Ryu.json').then(response => response.text()).then((txt)=>{
             this.spritejson = JSON.parse(txt)
+            this.scale = this.spritejson.scale
         })
 
         this.frameAnime = setInterval(()=>{
