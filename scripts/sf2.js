@@ -3,7 +3,7 @@ class SF2_Player{
         this.side = 0
         this.vitally = 100
         this.pos = [0,60]
-        this.status = 'idle'
+        this.status = 'walk_ahead'
         this.frame = 0
         this.frame_direction = 0
         this.scale = 0.7
@@ -12,15 +12,25 @@ class SF2_Player{
     }
 }
 
-SF2_Player.prototype.nextFrame = function(){
+SF2_Player.prototype.frameMotion = function(){
+    const player = this
+
+    function coil(player){
+        player.frame += player.frame_direction ? -1 : 1
+        player.frame_direction = [0,player.spritejson[player.status].length-1].includes(player.frame) ? !player.frame_direction : player.frame_direction
+    }
+
+    function repeat(player){
+        player.frame += player.frame_direction ? -1 : 1
+        player.frame = player.frame == player.spritejson[player.status].length ? 0 : player.frame
+    }
 
     switch(this.status){
         case 'idle':
-            this.frame += this.frame_direction ? -1 : 1
-            this.frame_direction = [0,this.spritejson['idle'].length-1].includes(this.frame) ? !this.frame_direction : this.frame_direction            
+            coil(player)
         break
-        case 'walk':
-
+        case 'walk_ahead':
+            repeat(player)
         break
     }
     this.draw()
@@ -61,12 +71,8 @@ class Ryu extends SF2_Player {
         })
 
         this.frameAnime = setInterval(()=>{
-            this.nextFrame()
+            this.frameMotion()
         }, this.speed_animate); 
-
-
-           
-//            this.nextFrame()
      
 
     }
