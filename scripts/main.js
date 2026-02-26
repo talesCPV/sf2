@@ -10,11 +10,10 @@ function setBlood(P,val){
 
 const ryu = new Ryu(document.getElementById('cnvScreen'))
 
-ryu.draw()
-/*
 ryu.spritejson.then(()=>{
     ryu.draw() 
 })
 
-console.log(ryu)
-*/
+
+
+//console.log(ryu)
