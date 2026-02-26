@@ -3,11 +3,11 @@ class SF2_Player{
         this.side = 0
         this.vitally = 100
         this.pos = [0,60]
-        this.status = 'walk_ahead'
-        this.frame = 0
+        this.status = 'idle'
+        this.frame = 2
         this.frame_direction = 0
         this.scale = 0.7
-        this.speed_animate = 80
+        this.speed_animate = 100
         this.spritejson = [{'idle':[{"x":0,"y":0,"w":60,"h":100}]}]
     }
 }
@@ -21,8 +21,12 @@ SF2_Player.prototype.frameMotion = function(){
     }
 
     function repeat(player){
-        player.frame += player.frame_direction ? -1 : 1
+        player.frame += 1
         player.frame = player.frame == player.spritejson[player.status].length ? 0 : player.frame
+    }
+
+    function once(player){
+        player.frame += player.frame < player.spritejson[player.status].length-1 ? (player.frame_direction ? -1 : 1 ): 0
     }
 
     switch(this.status){
@@ -32,6 +36,15 @@ SF2_Player.prototype.frameMotion = function(){
         case 'walk_ahead':
             repeat(player)
         break
+        case 'walk_back':
+            repeat(player)
+        break
+        case 'jump_spin':
+            repeat(player)
+        break
+        case 'jump':
+            repeat(player)
+        break           
     }
     this.draw()
 }
