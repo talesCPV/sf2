@@ -1,7 +1,5 @@
 class SF2{
-    constructor(id,p1,p2='Ken'){
-        this.p1_score = 0
-        this.p2_score = 0
+    constructor(id,p1="Ryu",p2='Ken'){
         this.hi_score = 0
         this.time = 99
         this.p1 = p1
@@ -12,6 +10,10 @@ class SF2{
         }
 
         this.makeScreen()
+        this.createPlayer(1,'Ryu')
+        this.createPlayer(2,'Ryu')
+
+        this.setScore()
 
         document.getElementById(id).appendChild(this.screen)
     }
@@ -46,13 +48,40 @@ SF2.prototype.makeScreen = function(){
     this.screen.appendChild(this.canvas)
 }
 
+SF2.prototype.createPlayer = function(N,P){
+    let player
+    switch(P){
+        case 'Ryu':
+            player = new Ryu(this.canvas)
+        break
+        case 'Ken':
+
+        break
+    }
+
+    if(N==1){
+        this.p1 = player
+    }else{
+        this.p2 = player
+        this.p2.side = 1
+        this.p2.pos[0] = 240
+    }
+
+}
+
 SF2.prototype.setScore = function(){
-   this.screen.querySelector('#p1-score').innerHTML = this.p1_score.toString().padStart(6,0) 
-   this.screen.querySelector('#p2-score').innerHTML = this.p2_score.toString().padStart(6,0) 
+   this.screen.querySelector('#p1-score').innerHTML = this.p1.score.toString().padStart(6,0)
+   this.screen.querySelector('#p2-score').innerHTML = this.p2.score.toString().padStart(6,0) 
+   this.screen.querySelector('#p1-name').innerHTML = this.p1.name.toUpperCase()
+   this.screen.querySelector('#p2-name').innerHTML = this.p2.name.toUpperCase()
+
+   
 }
 
 class SF2_Player{
     constructor(){
+        this.score = 520
+        this.name = 'X'
         this.side = 0
         this.vitally = 100
         this.pos = [0,60]
