@@ -11,7 +11,7 @@ class SF2{
 
         this.makeScreen()
         this.createPlayer(1,'Ryu')
-        this.createPlayer(2,'Ryu')
+        this.createPlayer(2,'Ken')
 
         this.setScore()
 
@@ -55,7 +55,7 @@ SF2.prototype.createPlayer = function(N,P){
             player = new Ryu(this.canvas)
         break
         case 'Ken':
-
+            player = new Ken(this.canvas)
         break
     }
 
@@ -64,7 +64,7 @@ SF2.prototype.createPlayer = function(N,P){
     }else{
         this.p2 = player
         this.p2.side = 1
-        this.p2.pos[0] = 240
+        this.p2.pos[0] = 200
     }
 
 }
@@ -85,8 +85,8 @@ class SF2_Player{
         this.side = 0
         this.vitally = 100
         this.pos = [0,60]
-        this.status = 'idle'
-        this.frame = 2
+        this.status = 'jump_spin'
+        this.frame = 0
         this.frame_direction = 0
         this.scale = 1
         this.speed_animate = 100
@@ -178,4 +178,15 @@ class Ryu extends SF2_Player {
      
 
     }
+}
+
+
+class Ken extends Ryu {
+    constructor(CV){
+        super()
+        this.name = "Ken"
+        this.canvas = CV
+        this.img.src =  'assets/sprites/Ken.png'
+    }
+
 }
