@@ -18,7 +18,7 @@ class SF2{
         this.time = 99
         this.p1 = p1
         this.p2 = p2
-        this.fps = 10
+        this.fps = 60
         this.clockCount = 0
         this.makeScreen()
         this.createPlayer(1,'Ryu')
@@ -29,6 +29,15 @@ class SF2{
         document.getElementById(id).appendChild(this.screen)
 
         this.runtime = setInterval(()=>{
+
+            if(this.p1.pos[0] > this.p2.pos[0]){
+                this.p1.side = 1
+                this.p2.side = 0
+            }else{
+                this.p1.side = 0
+                this.p2.side = 1
+            }
+
             this.screenClear()
             this.p1.frameMotion()
             this.p2.frameMotion()
@@ -122,9 +131,11 @@ class SF2_Player{
         this.status = 'idle'
         this.frame = 0
         this.frame_direction = 0
+        this.anime_fps = 0.2
+        this.anime_fps_count = 0
         this.scale = 1
         this.spritejson = [{'idle':[{"x":0,"y":0,"w":60,"h":100}]}]
-        this.pixel_move = 8
+        this.pixel_move = 3
     }
 }
 
@@ -149,28 +160,45 @@ SF2_Player.prototype.frameMotion = function(){
 //        player.pos[1] -= 10
     }
 
+    this.anime_fps_count += this.anime_fps
+    if(this.anime_fps_count >= 1){
+        this.anime_fps_count -= 1
+        switch(this.status){
+            case 'idle':
+                coil(player)
+            break
+            case 'walk_ahead':
+                repeat(player)
+            break
+            case 'walk_back':
+                repeat(player)    
+            break
+            case 'jump_spin':
+                repeat(player)
+                jump(player)
+            break
+            case 'jump':
+                repeat(player)
+                jump(player)
+            break           
+        }
+    }
+
     switch(this.status){
-        case 'idle':
-            coil(player)
-        break
         case 'walk_ahead':
-            repeat(player)
             this.pos[0] += this.pixel_move
         break
         case 'walk_back':
-            repeat(player)
             this.pos[0] -= this.pixel_move
 
         break
         case 'jump_spin':
-            repeat(player)
-            jump(player)
         break
         case 'jump':
-            repeat(player)
-            jump(player)
         break           
     }
+
+
     this.draw()
 }
 
@@ -201,20 +229,19 @@ SF2_Player.prototype.stop = function(){
 }
 
 SF2_Player.prototype.draw = function(){
-    const w =  this.spritejson[this.status][this.frame].w // 60 
-    const h =  this.spritejson[this.status][this.frame].h // 96 
-    const x =  this.spritejson[this.status][this.frame].x // 0
-    const y =  this.spritejson[this.status][this.frame].y // 0
-    const flip_x = this.side ?0:w*-1
+    const w =  this.spritejson[this.status][this.frame].w
+    const h =  this.spritejson[this.status][this.frame].h
+    const x =  this.spritejson[this.status][this.frame].x
+    const y =  this.spritejson[this.status][this.frame].y
+    const flip_x = this.side ?0:w/2*-1
     const scale_x = this.side?1:-1
-    const pos_x = this.pos[0]*(this.side ?1:(-1*this.scale))
+    const pos_x = (this.pos[0]*(this.side ?1:(-1*this.scale))) - w/2
     const pos_y = this.pos[1]
 
 //x  * (this.side?1:-1) 
 
     if (this.canvas.getContext) {
         ctx = this.canvas.getContext('2d');
-//        ctx.clearRect(this.pos[0], this.pos[1], w, h);
         ctx.save();
         ctx.scale(scale_x, 1);
         ctx.translate(flip_x, 0 );
