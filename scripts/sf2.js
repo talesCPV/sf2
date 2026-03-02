@@ -1,14 +1,25 @@
+const keys = {}
+document.addEventListener('keydown', (event) => {
+    keys[event.key] = true
+    event.preventDefault()
+    sf2.p1.move(event.key)         
+})
+
+document.addEventListener('keyup', (event) => {
+    keys[event.key] = true
+    event.preventDefault()
+    sf2.p1.stop()
+})
+
 class SF2{
     constructor(id,p1="Ryu",p2='Ken'){
+        this.keys = {}
         this.hi_score = 0
         this.time = 99
         this.p1 = p1
         this.p2 = p2
-
-        this.setBlood = (P,val)=>{
-            document.getElementById(`p${P}-blood`).style.width = `${val}%`
-        }
-
+        this.fps = 10
+        this.clockCount = 0
         this.makeScreen()
         this.createPlayer(1,'Ryu')
         this.createPlayer(2,'Ken')
@@ -16,6 +27,13 @@ class SF2{
         this.setScore()
 
         document.getElementById(id).appendChild(this.screen)
+
+        this.runtime = setInterval(()=>{
+            this.screenClear()
+            this.p1.frameMotion()
+            this.p2.frameMotion()
+            this.setClock()
+        },1000/this.fps); 
     }
 }
 
@@ -48,6 +66,11 @@ SF2.prototype.makeScreen = function(){
     this.screen.appendChild(this.canvas)
 }
 
+SF2.prototype.screenClear = function(){
+    ctx = this.canvas.getContext('2d');
+    ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+}
+
 SF2.prototype.createPlayer = function(N,P){
     let player
     switch(P){
@@ -74,23 +97,34 @@ SF2.prototype.setScore = function(){
    this.screen.querySelector('#p2-score').innerHTML = this.p2.score.toString().padStart(6,0) 
    this.screen.querySelector('#p1-name').innerHTML = this.p1.name.toUpperCase()
    this.screen.querySelector('#p2-name').innerHTML = this.p2.name.toUpperCase()
+}
 
-   
+SF2.prototype.setClock = function(){
+    this.clockCount += 1000/this.fps
+    if(this.clockCount >= 1000){
+        this.clockCount = 0
+        this.time --
+        this.screen.querySelector('#time').innerHTML = this.time
+    }
+}
+
+SF2.prototype.setBlood = function(P,val){
+    document.getElementById(`p${P}-blood`).style.width = `${val}%`
 }
 
 class SF2_Player{
     constructor(){
-        this.score = 520
+        this.score = 0
         this.name = 'X'
         this.side = 0
         this.vitally = 100
         this.pos = [0,60]
-        this.status = 'jump_spin'
+        this.status = 'idle'
         this.frame = 0
         this.frame_direction = 0
         this.scale = 1
-        this.speed_animate = 100
         this.spritejson = [{'idle':[{"x":0,"y":0,"w":60,"h":100}]}]
+        this.pixel_move = 8
     }
 }
 
@@ -121,9 +155,12 @@ SF2_Player.prototype.frameMotion = function(){
         break
         case 'walk_ahead':
             repeat(player)
+            this.pos[0] += this.pixel_move
         break
         case 'walk_back':
             repeat(player)
+            this.pos[0] -= this.pixel_move
+
         break
         case 'jump_spin':
             repeat(player)
@@ -135,6 +172,32 @@ SF2_Player.prototype.frameMotion = function(){
         break           
     }
     this.draw()
+}
+
+SF2_Player.prototype.move = function(key){
+
+    switch(key){
+        case 'ArrowUp':
+            this.status = 'jump'
+        break
+        case 'ArrowDown':
+            console.log('P1 Down')
+        break
+        case 'ArrowLeft':
+            this.status = 'walk_back'
+        break
+        case 'ArrowRight':
+             this.status = 'walk_ahead'
+        break
+        default:
+            console.log(key)
+    }
+}
+
+SF2_Player.prototype.stop = function(){
+    this.frame = 0
+    this.frame_direction = 0
+    this.status = 'idle'
 }
 
 SF2_Player.prototype.draw = function(){
@@ -151,7 +214,7 @@ SF2_Player.prototype.draw = function(){
 
     if (this.canvas.getContext) {
         ctx = this.canvas.getContext('2d');
-        ctx.clearRect(this.pos[0], this.pos[1], w, h);
+//        ctx.clearRect(this.pos[0], this.pos[1], w, h);
         ctx.save();
         ctx.scale(scale_x, 1);
         ctx.translate(flip_x, 0 );
@@ -171,15 +234,8 @@ class Ryu extends SF2_Player {
             this.spritejson = JSON.parse(txt)
             this.scale = this.spritejson.scale
         })
-
-        this.frameAnime = setInterval(()=>{
-            this.frameMotion()
-        }, this.speed_animate); 
-     
-
     }
 }
-
 
 class Ken extends Ryu {
     constructor(CV){
@@ -188,5 +244,4 @@ class Ken extends Ryu {
         this.canvas = CV
         this.img.src =  'assets/sprites/Ken.png'
     }
-
 }
