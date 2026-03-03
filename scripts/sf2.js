@@ -133,6 +133,12 @@ class SF2_Player{
         this.frame_direction = 0
         this.anime_fps = 0.2
         this.anime_fps_count = 0
+        this.jmp = new Object
+            this.jmp.on_air = 0
+            this.jmp.max_height = 50
+            this.jmp.height = 0
+            this.jmp.up = 0
+            this.jmp.pixels = 3
         this.scale = 1
         this.spritejson = [{'idle':[{"x":0,"y":0,"w":60,"h":100}]}]
         this.pixel_move = 3
@@ -157,7 +163,13 @@ SF2_Player.prototype.frameMotion = function(){
     }
 
     function jump(player){
-//        player.pos[1] -= 10
+        if(player.jmp.on_air){
+            player.jmp.height += player.jmp.pixels * (player.jmp.up ? 1 : -1)
+            player.jmp.up = player.jmp.height >= player.jmp.max_height ? 0 : player.jmp.up
+            player.jmp.on_air = player.jmp.height > 0
+        }else{
+            player.jmp.height = 0
+        }
     }
 
     this.anime_fps_count += this.anime_fps
@@ -178,6 +190,7 @@ SF2_Player.prototype.frameMotion = function(){
                 jump(player)
             break
             case 'jump':
+                this.jump()
                 repeat(player)
                 jump(player)
             break           
@@ -195,10 +208,10 @@ SF2_Player.prototype.frameMotion = function(){
         case 'jump_spin':
         break
         case 'jump':
-        break           
+        break
     }
 
-
+    jump(player)
     this.draw()
 }
 
@@ -223,10 +236,16 @@ SF2_Player.prototype.move = function(key){
 }
 
 SF2_Player.prototype.stop = function(){
-    this.frame = 0
-    this.frame_direction = 0
-    this.status = 'idle'
+        this.frame = 0
+        this.frame_direction = 0
+        this.status = 'idle'
 }
+
+SF2_Player.prototype.jump = function(){    
+    this.jmp.up = 1
+    this.jmp.on_air = 1
+}
+
 
 SF2_Player.prototype.draw = function(){
     const w =  this.spritejson[this.status][this.frame].w
@@ -236,7 +255,7 @@ SF2_Player.prototype.draw = function(){
     const flip_x = this.side ?0:w/2*-1
     const scale_x = this.side?1:-1
     const pos_x = (this.pos[0]*(this.side ?1:(-1*this.scale))) - w/2
-    const pos_y = this.pos[1]
+    const pos_y = this.pos[1] - this.jmp.height
 
 //x  * (this.side?1:-1) 
 
