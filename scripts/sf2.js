@@ -1,14 +1,10 @@
-const keys = {}
 document.addEventListener('keydown', (event) => {
-    keys[event.key] = true
     event.preventDefault()
-    sf2.p1.move(event.key)         
+    sf2.p1.joystick(event.key)         
 })
 
-document.addEventListener('keyup', (event) => {
-    keys[event.key] = true
-    event.preventDefault()
-    sf2.p1.stop()
+document.addEventListener('keyup', () => {
+    sf2.p1.joystick(0)
 })
 
 class SF2{
@@ -127,18 +123,25 @@ class SF2_Player{
         this.name = 'X'
         this.side = 0
         this.vitally = 100
+        this.keys = []
         this.pos = [0,60]
-        this.status = 'idle'
-        this.frame = 0
-        this.frame_direction = 0
-        this.anime_fps = 0.2
-        this.anime_fps_count = 0
+
+        this.move_direct = 'S'
+
+        this.anime = new Object
+            this.anime.status = 'idle'
+            this.anime.frame = 0
+            this.anime.frame_direction = 0
+            this.anime.fps = 0.2
+            this.anime.fps_count = 0
+
         this.jmp = new Object
             this.jmp.on_air = 0
             this.jmp.max_height = 50
             this.jmp.height = 0
             this.jmp.up = 0
             this.jmp.pixels = 3
+
         this.scale = 1
         this.spritejson = [{'idle':[{"x":0,"y":0,"w":60,"h":100}]}]
         this.pixel_move = 3
@@ -149,43 +152,48 @@ SF2_Player.prototype.frameMotion = function(){
     const player = this
 
     function coil(player){
-        player.frame += player.frame_direction ? -1 : 1
-        player.frame_direction = [0,player.spritejson[player.status].length-1].includes(player.frame) ? !player.frame_direction : player.frame_direction
+        player.anime.frame += player.anime.frame_direction ? -1 : 1
+        player.anime.frame_direction = [0,player.spritejson[player.anime.status].length-1].includes(player.anime.frame) ? !player.anime.frame_direction : player.anime.frame_direction
     }
 
     function repeat(player){
-        player.frame += 1
-        player.frame = player.frame == player.spritejson[player.status].length ? 0 : player.frame
+        player.anime.frame += 1
+        player.anime.frame = player.anime.frame == player.spritejson[player.anime.status].length ? 0 : player.anime.frame
     }
 
     function once(player){
-        player.frame += player.frame < player.spritejson[player.status].length-1 ? (player.frame_direction ? -1 : 1 ): 0
+        player.anime.frame += player.anime.frame < player.spritejson[player.anime.status].length-1 ? (player.anime.frame_direction ? -1 : 1 ): 0
     }
 
     function jump(player){
         if(player.jmp.on_air){
             player.jmp.height += player.jmp.pixels * (player.jmp.up ? 1 : -1)
-            player.jmp.up = player.jmp.height >= player.jmp.max_height ? 0 : player.jmp.up
+            player.jmp.up = (player.jmp.height >= player.jmp.max_height) ? 0 : player.jmp.up
             player.jmp.on_air = player.jmp.height > 0
         }else{
             player.jmp.height = 0
         }
     }
 
-    this.anime_fps_count += this.anime_fps
-    if(this.anime_fps_count >= 1){
-        this.anime_fps_count -= 1
-        switch(this.status){
-            case 'idle':
+    this.anime.fps_count += this.anime.fps
+
+    // Sprite Frame Motion
+    if(this.anime.fps_count >= 1){
+        this.anime.fps_count -= 1
+        switch(this.move_direct){
+            case 'S':
+                this.anime.status = 'idle'
                 coil(player)
             break
-            case 'walk_ahead':
+            case 'R':
+                this.anime.status = this.anime.side ? 'walk_ahead' : 'walk_back'
                 repeat(player)
             break
-            case 'walk_back':
+            case 'L':
+                this.anime.status = this.anime.side ? 'walk_ahead' : 'walk_back'
                 repeat(player)    
             break
-            case 'jump_spin':
+            case 'UR':
                 repeat(player)
                 jump(player)
             break
@@ -197,7 +205,8 @@ SF2_Player.prototype.frameMotion = function(){
         }
     }
 
-    switch(this.status){
+//  Every Frame   
+    switch(this.anime.status){
         case 'walk_ahead':
             this.pos[0] += this.pixel_move
         break
@@ -215,43 +224,65 @@ SF2_Player.prototype.frameMotion = function(){
     this.draw()
 }
 
-SF2_Player.prototype.move = function(key){
-
-    switch(key){
-        case 'ArrowUp':
-            this.status = 'jump'
-        break
-        case 'ArrowDown':
-            console.log('P1 Down')
-        break
-        case 'ArrowLeft':
-            this.status = 'walk_back'
-        break
-        case 'ArrowRight':
-             this.status = 'walk_ahead'
-        break
-        default:
-            console.log(key)
+SF2_Player.prototype.joystick = function(key){
+    if(!this.keys.includes(key)){
+        this.keys.push(key)
     }
+    console.log(this.keys)
+
+
+/*
+    if(key){
+        if(!this.jmp.on_air){
+            switch(key){
+                case 'ArrowUp':
+                    this.move_direct = 'U'
+                break
+                case 'ArrowDown':
+                    this.move_direct = 'D'
+                break
+                case 'ArrowLeft':
+                    this.move_direct== (this.move_direct+'L').substring(0,2)
+                    console.log('LEFT',this.move_direct)                    
+                    this.anime.status = this.side ? 'walk_back' : 'walk_ahead'
+                break
+                case 'ArrowRight':
+                    this.move_direct== (this.move_direct+'R').substring(0,2)
+//                    this.status = !this.side ? 'walk_back' : 'walk_ahead'
+                break
+                default:
+                    this.move_direct = 'S'
+//                    console.log(key)
+            }
+            console.log(this.move_direct)
+        }
+    }else{ // KEY UP
+        if(!this.jmp.on_air){
+            this.anime.frame = 0
+            this.anime.frame_direction = 0
+            this.anime.status = 'idle'
+            this.jmp.height = 0
+            this.jmp.up = 0
+            this.jmp.on_air = 0
+        }
+    }
+*/
+
 }
 
-SF2_Player.prototype.stop = function(){
-        this.frame = 0
-        this.frame_direction = 0
-        this.status = 'idle'
-}
-
-SF2_Player.prototype.jump = function(){    
-    this.jmp.up = 1
-    this.jmp.on_air = 1
+SF2_Player.prototype.jump = function(){
+    if(!this.jmp.on_air){
+        this.jmp.on_air = 1    
+        this.jmp.up = 1
+    }
 }
 
 
 SF2_Player.prototype.draw = function(){
-    const w =  this.spritejson[this.status][this.frame].w
-    const h =  this.spritejson[this.status][this.frame].h
-    const x =  this.spritejson[this.status][this.frame].x
-    const y =  this.spritejson[this.status][this.frame].y
+    const w =  this.spritejson[this.anime.status][this.anime.frame].w
+    const h =  this.spritejson[this.anime.status][this.anime.frame].h
+    const x =  this.spritejson[this.anime.status][this.anime.frame].x
+    const y =  this.spritejson[this.anime.status][this.anime.frame].y
     const flip_x = this.side ?0:w/2*-1
     const scale_x = this.side?1:-1
     const pos_x = (this.pos[0]*(this.side ?1:(-1*this.scale))) - w/2
