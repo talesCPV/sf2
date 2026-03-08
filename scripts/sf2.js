@@ -1,10 +1,10 @@
 document.addEventListener('keydown', (event) => {
     event.preventDefault()
-    sf2.p1.joystick(event.key)         
+    sf2.p1.joystick(event.key,1)         
 })
 
-document.addEventListener('keyup', () => {
-    sf2.p1.joystick(0)
+document.addEventListener('keyup', (event) => {
+    sf2.p1.joystick(event.key,0) 
 })
 
 class SF2{
@@ -123,7 +123,17 @@ class SF2_Player{
         this.name = 'X'
         this.side = 0
         this.vitally = 100
-        this.keys = []
+        this.keys = new Object
+        this.keys.UP = 0
+        this.keys.DW = 0
+        this.keys.LF = 0
+        this.keys.RG = 0
+        this.keys.PW = 0
+        this.keys.PM = 0
+        this.keys.PS = 0
+        this.keys.KW = 0
+        this.keys.KM = 0
+        this.keys.KS = 0
         this.pos = [0,60]
 
         this.move_direct = 'S'
@@ -180,28 +190,22 @@ SF2_Player.prototype.frameMotion = function(){
     // Sprite Frame Motion
     if(this.anime.fps_count >= 1){
         this.anime.fps_count -= 1
-        switch(this.move_direct){
-            case 'S':
-                this.anime.status = 'idle'
-                coil(player)
-            break
-            case 'R':
-                this.anime.status = this.anime.side ? 'walk_ahead' : 'walk_back'
-                repeat(player)
-            break
-            case 'L':
-                this.anime.status = this.anime.side ? 'walk_ahead' : 'walk_back'
-                repeat(player)    
-            break
-            case 'UR':
-                repeat(player)
-                jump(player)
-            break
-            case 'jump':
-                this.jump()
-                repeat(player)
-                jump(player)
-            break           
+        if(this.keys.UP){         
+            this.setAnime('jump')
+            this.jump()
+            repeat(player)
+            jump(player)
+        }else if(this.keys.RG){
+            this.anime.status = this.anime.side ? this.setAnime('walk_back') : this.setAnime('walk_ahead')
+            repeat(player)
+        }else if(this.keys.LF){
+            this.anime.status = this.anime.side ? this.setAnime('walk_ahead') : this.setAnime('walk_back')
+            repeat(player)    
+        }else if(this.keys.DW){   
+
+        }else{
+            this.setAnime('idle')
+            coil(player)
         }
     }
 
@@ -224,56 +228,55 @@ SF2_Player.prototype.frameMotion = function(){
     this.draw()
 }
 
-SF2_Player.prototype.joystick = function(key){
-    if(!this.keys.includes(key)){
-        this.keys.push(key)
-    }
-    console.log(this.keys)
+SF2_Player.prototype.joystick = function(key,press=1){
 
-
-/*
-    if(key){
-        if(!this.jmp.on_air){
-            switch(key){
-                case 'ArrowUp':
-                    this.move_direct = 'U'
-                break
-                case 'ArrowDown':
-                    this.move_direct = 'D'
-                break
-                case 'ArrowLeft':
-                    this.move_direct== (this.move_direct+'L').substring(0,2)
-                    console.log('LEFT',this.move_direct)                    
-                    this.anime.status = this.side ? 'walk_back' : 'walk_ahead'
-                break
-                case 'ArrowRight':
-                    this.move_direct== (this.move_direct+'R').substring(0,2)
-//                    this.status = !this.side ? 'walk_back' : 'walk_ahead'
-                break
-                default:
-                    this.move_direct = 'S'
-//                    console.log(key)
-            }
-            console.log(this.move_direct)
-        }
-    }else{ // KEY UP
-        if(!this.jmp.on_air){
-            this.anime.frame = 0
-            this.anime.frame_direction = 0
-            this.anime.status = 'idle'
-            this.jmp.height = 0
-            this.jmp.up = 0
-            this.jmp.on_air = 0
+    if(!this.jmp.on_air){
+        switch(key){
+            case this.spritejson.joystick.UP:
+                this.keys.UP = press 
+            break
+            case this.spritejson.joystick.DW:
+                this.keys.DW = press 
+            break
+            case this.spritejson.joystick.LF:
+                this.keys.LF = press 
+            break
+            case this.spritejson.joystick.RG:
+                this.keys.RG = press 
+            break
+            case this.spritejson.joystick.PW:
+                this.keys.PW = press 
+            break
+            case this.spritejson.joystick.PM:
+                this.keys.PM = press 
+            break
+            case this.spritejson.joystick.PS:
+                this.keys.PS = press 
+            break
+            case this.spritejson.joystick.KW:
+                this.keys.KW = press 
+            break
+            case this.spritejson.joystick.KM:
+                this.keys.KM = press 
+            break
+            case this.spritejson.joystick.KS:
+                this.keys.KS = press 
+            break
         }
     }
-*/
-
 }
 
 SF2_Player.prototype.jump = function(){
     if(!this.jmp.on_air){
         this.jmp.on_air = 1    
         this.jmp.up = 1
+    }
+}
+
+SF2_Player.prototype.setAnime = function(anime){
+    if(!this.jmp.on_air && this.anime.status != anime){
+        this.anime.frame = 0   
+        this.anime.status = anime
     }
 }
 
