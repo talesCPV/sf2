@@ -161,21 +161,21 @@ class SF2_Player{
 SF2_Player.prototype.frameMotion = function(){
     const player = this
 
-    function coil(player){
+    function coil(){
         player.anime.frame += player.anime.frame_direction ? -1 : 1
         player.anime.frame_direction = [0,player.spritejson[player.anime.status].length-1].includes(player.anime.frame) ? !player.anime.frame_direction : player.anime.frame_direction
     }
 
-    function repeat(player){
+    function repeat(){
         player.anime.frame += 1
         player.anime.frame = player.anime.frame == player.spritejson[player.anime.status].length ? 0 : player.anime.frame
     }
 
-    function once(player){
+    function once(){
         player.anime.frame += player.anime.frame < player.spritejson[player.anime.status].length-1 ? (player.anime.frame_direction ? -1 : 1 ): 0
     }
 
-    function jump(player){
+    function jump(){
         if(player.jmp.on_air){
             player.jmp.height += player.jmp.pixels * (player.jmp.up ? 1 : -1)
             player.jmp.up = (player.jmp.height >= player.jmp.max_height) ? 0 : player.jmp.up
@@ -185,27 +185,34 @@ SF2_Player.prototype.frameMotion = function(){
         }
     }
 
+    function setAnime(anime, now=0,air=0){
+        if(player.anime.status != anime){
+            player.anime.frame = 0   
+            player.anime.status = anime
+        }    
+    }
+
     this.anime.fps_count += this.anime.fps
 
     // Sprite Frame Motion
     if(this.anime.fps_count >= 1){
         this.anime.fps_count -= 1
         if(this.keys.UP){         
-            this.setAnime('jump')
+            setAnime('jump')
             this.jump()
             repeat(player)
             jump(player)
         }else if(this.keys.RG){
-            this.anime.status = this.anime.side ? this.setAnime('walk_back') : this.setAnime('walk_ahead')
+            this.anime.status = this.anime.side ? setAnime('walk_back') : setAnime('walk_ahead')
             repeat(player)
         }else if(this.keys.LF){
-            this.anime.status = this.anime.side ? this.setAnime('walk_ahead') : this.setAnime('walk_back')
+            this.anime.status = this.anime.side ? setAnime('walk_ahead') : setAnime('walk_back')
             repeat(player)    
         }else if(this.keys.DW){   
 
         }else{
-            this.setAnime('idle')
-            coil(player)
+            setAnime('idle')
+            coil()
         }
     }
 
@@ -270,13 +277,6 @@ SF2_Player.prototype.jump = function(){
     if(!this.jmp.on_air){
         this.jmp.on_air = 1    
         this.jmp.up = 1
-    }
-}
-
-SF2_Player.prototype.setAnime = function(anime){
-    if(!this.jmp.on_air && this.anime.status != anime){
-        this.anime.frame = 0   
-        this.anime.status = anime
     }
 }
 
