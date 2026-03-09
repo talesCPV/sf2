@@ -7,6 +7,8 @@ document.addEventListener('keyup', (event) => {
     sf2.p1.joystick(event.key,0) 
 })
 
+/*   MAIN CLASS   */
+
 class SF2{
     constructor(id,p1="Ryu",p2='Ken'){
         this.keys = {}
@@ -117,12 +119,15 @@ SF2.prototype.setBlood = function(P,val){
     document.getElementById(`p${P}-blood`).style.width = `${val}%`
 }
 
+/*   PLAYER CLASS   */
+
 class SF2_Player{
     constructor(){
         this.score = 0
         this.name = 'X'
         this.side = 0
         this.vitally = 100
+        this.floor = 150
         this.keys = new Object
         this.keys.UP = 0
         this.keys.DW = 0
@@ -144,16 +149,16 @@ class SF2_Player{
             this.anime.frame_direction = 0
             this.anime.fps = 0.2
             this.anime.fps_count = 0
+            this.anime.wait = 0
 
         this.jmp = new Object
             this.jmp.on_air = 0
-            this.jmp.max_height = 50
-            this.jmp.height = 0
+            this.jmp.max_height = 80
             this.jmp.up = 0
-            this.jmp.pixels = 3
+            this.jmp.pixels = 5
 
         this.scale = 1
-        this.spritejson = [{'idle':[{"x":0,"y":0,"w":60,"h":100}]}]
+        this.spritejson = []
         this.pixel_move = 3
     }
 }
@@ -175,64 +180,35 @@ SF2_Player.prototype.frameMotion = function(){
         player.anime.frame += player.anime.frame < player.spritejson[player.anime.status].length-1 ? (player.anime.frame_direction ? -1 : 1 ): 0
     }
 
-    function jump(){
-        if(player.jmp.on_air){
-            player.jmp.height += player.jmp.pixels * (player.jmp.up ? 1 : -1)
-            player.jmp.up = (player.jmp.height >= player.jmp.max_height) ? 0 : player.jmp.up
-            player.jmp.on_air = player.jmp.height > 0
-        }else{
-            player.jmp.height = 0
-        }
-    }
-
-    function setAnime(anime, now=0,air=0){
-        if(player.anime.status != anime){
-            player.anime.frame = 0   
-            player.anime.status = anime
-        }    
-    }
-
     this.anime.fps_count += this.anime.fps
 
     // Sprite Frame Motion
     if(this.anime.fps_count >= 1){
         this.anime.fps_count -= 1
-        if(this.keys.UP){         
-            setAnime('jump')
-            this.jump()
-            repeat(player)
-            jump(player)
-        }else if(this.keys.RG){
-            this.anime.status = this.anime.side ? setAnime('walk_back') : setAnime('walk_ahead')
-            repeat(player)
-        }else if(this.keys.LF){
-            this.anime.status = this.anime.side ? setAnime('walk_ahead') : setAnime('walk_back')
-            repeat(player)    
-        }else if(this.keys.DW){   
-
-        }else{
-            setAnime('idle')
-            coil()
+        switch(this.anime.status){
+            case 'idle':
+                coil()
+            break
+            case 'walk_ahead':
+                repeat()
+            break
+            case 'walk_back':
+                repeat()
+            break
+            case 'jump_spin':
+                once()
+            break
+            case 'jump':
+                once()
+            break
         }
     }
 
 //  Every Frame   
-    switch(this.anime.status){
-        case 'walk_ahead':
-            this.pos[0] += this.pixel_move
-        break
-        case 'walk_back':
-            this.pos[0] -= this.pixel_move
 
-        break
-        case 'jump_spin':
-        break
-        case 'jump':
-        break
-    }
-
-    jump(player)
+    this.jump()
     this.draw()
+    this.move()
 }
 
 SF2_Player.prototype.joystick = function(key,press=1){
@@ -240,7 +216,8 @@ SF2_Player.prototype.joystick = function(key,press=1){
     if(!this.jmp.on_air){
         switch(key){
             case this.spritejson.joystick.UP:
-                this.keys.UP = press 
+//                this.keys.UP = press 
+                this.jmp.up = 1
             break
             case this.spritejson.joystick.DW:
                 this.keys.DW = press 
@@ -271,37 +248,73 @@ SF2_Player.prototype.joystick = function(key,press=1){
             break
         }
     }
+    console.log(this.keys)
 }
 
 SF2_Player.prototype.jump = function(){
-    if(!this.jmp.on_air){
-        this.jmp.on_air = 1    
-        this.jmp.up = 1
+    if(this.pos[1] < this.floor || this.jmp.up){
+        this.jmp.on_air = 1
+        this.pos[1] += this.jmp.up ? -this.jmp.pixels : this.jmp.pixels
+        this.jmp.up = (this.floor - this.pos[1]) > this.jmp.max_height ? 0 : this.jmp.up
+//        this.anime.status = 'jump'
+    }else{
+        this.jmp.on_air = 0
+        this.pos[1] = this.floor
+//        this.anime.frame = 0
+        this.anime.status = 'idle'
     }
 }
-
 
 SF2_Player.prototype.draw = function(){
-    const w =  this.spritejson[this.anime.status][this.anime.frame].w
-    const h =  this.spritejson[this.anime.status][this.anime.frame].h
-    const x =  this.spritejson[this.anime.status][this.anime.frame].x
-    const y =  this.spritejson[this.anime.status][this.anime.frame].y
-    const flip_x = this.side ?0:w/2*-1
-    const scale_x = this.side?1:-1
-    const pos_x = (this.pos[0]*(this.side ?1:(-1*this.scale))) - w/2
-    const pos_y = this.pos[1] - this.jmp.height
+    try{
+        const w =  this.spritejson[this.anime.status][this.anime.frame].w
+        const h =  this.spritejson[this.anime.status][this.anime.frame].h
+        const x =  this.spritejson[this.anime.status][this.anime.frame].x
+        const y =  this.spritejson[this.anime.status][this.anime.frame].y
+        const flip_x = this.side ?0:w/2*-1
+        const scale_x = this.side?1:-1
+        const pos_x = (this.pos[0]*(this.side ?1:(-1*this.scale))) - w/2
+        const pos_y = this.pos[1]
+    
+    //x  * (this.side?1:-1) 
+    
+        if (this.canvas.getContext) {
+            ctx = this.canvas.getContext('2d');
+            ctx.save();
+            ctx.scale(scale_x, 1);
+            ctx.translate(flip_x, -h );
+            ctx.drawImage(this.img,x,y,w,h,pos_x,pos_y,w*this.scale,h*this.scale);
+            ctx.restore();            
+        }
 
-//x  * (this.side?1:-1) 
+    }catch{null}
 
-    if (this.canvas.getContext) {
-        ctx = this.canvas.getContext('2d');
-        ctx.save();
-        ctx.scale(scale_x, 1);
-        ctx.translate(flip_x, 0 );
-        ctx.drawImage(this.img,x,y,w,h,pos_x,pos_y,w*this.scale,h*this.scale);
-        ctx.restore();            
-    }
 }
+
+SF2_Player.prototype.move = function(){
+
+    if(this.keys.UP){
+        if(!this.jmp.on_air){
+            this.jmp.up = 1
+        }
+    }else if(this.keys.DW){
+    }else if(this.keys.LF){
+    }else if(this.keys.RG){
+    }else if(this.keys.PW){
+    }else if(this.keys.PM){
+    }else if(this.keys.PS){
+    }else if(this.keys.KW){
+    }else if(this.keys.KM){
+    }else if(this.keys.KS){
+
+    }
+
+
+}
+
+
+/*  CARACTERS CLASSES  */
+
 
 class Ryu extends SF2_Player {
     constructor(CV) {
