@@ -1,28 +1,32 @@
 document.addEventListener('keydown', (event) => {
-    event.preventDefault()
-    sf2.p1.joystick(event.key,1)         
+    sf2.key_press(event,1)
+    console.log(event.key)
 })
 
 document.addEventListener('keyup', (event) => {
-    sf2.p1.joystick(event.key,0) 
+//    sf2.key_press(event,0)
 })
 
 /*   MAIN CLASS   */
 
 class SF2{
-    constructor(id,p1="Ryu",p2='Ken'){
-        this.keys = {}
+    constructor(id,p1='Ryu',p2='Ken'){
+        this.keys = []
+        this.key_time = 5
         this.hi_score = 0
         this.time = 99
+        this.key_wait= [15,15]
         this.p1 = p1
         this.p2 = p2
         this.fps = 60
         this.clockCount = 0
         this.makeScreen()
-        this.createPlayer(1,'Ryu')
-        this.createPlayer(2,'Ken')
-
+        this.createPlayer(1,p1)
+        this.createPlayer(2,p2)
         this.setScore()
+
+        this.img = new Image()
+        this.img.src =  'assets/sprites/backgrounds/honda.jpg'
 
         document.getElementById(id).appendChild(this.screen)
 
@@ -40,8 +44,66 @@ class SF2{
             this.p1.frameMotion()
             this.p2.frameMotion()
             this.setClock()
+            this.joystick()
+
+            this.key_wait[0]--
+            if(this.key_wait[0] < 0){
+                this.keys.splice(-1)
+                this.key_wait[0] = this.key_wait[1]
+            }
+
         },1000/this.fps); 
     }
+}
+
+SF2.prototype.key_press = function(e,press=1){
+    e.preventDefault()
+    if(!this.keys.includes(e.key) && press){
+        this.keys.push(e.key)
+    }else  if(this.keys.includes(e.key) && !press){
+        this.keys.splice(this.keys.indexOf(this.keys),1)
+        console.log(this.keys)
+    }
+}
+
+SF2.prototype.joystick = function(){
+
+    const sf2 = this
+
+    function move(P){
+
+        const on_air = P.jmp.on_air
+
+        if(sf2.keys.includes(P.spritejson.joystick.UP) && !on_air){
+            P.jmp.up = 1
+            P.anime.frame = 0
+            P.anime.status = 'jump'
+        }else if(sf2.keys.includes(P.spritejson.joystick.DW) && !on_air){
+        }else if(sf2.keys.includes(P.spritejson.joystick.LF) && !on_air){
+            P.anime.status = 'walk_ahead'
+        }else if(sf2.keys.includes(P.spritejson.joystick.RG) && !on_air){
+        }else if(sf2.keys.includes(P.spritejson.joystick.PW)){
+        }else if(sf2.keys.includes(P.spritejson.joystick.PM)){
+        }else if(sf2.keys.includes(P.spritejson.joystick.PS)){
+        }else if(sf2.keys.includes(P.spritejson.joystick.KW)){
+        }else if(sf2.keys.includes(P.spritejson.joystick.KM)){
+        }else if(sf2.keys.includes(P.spritejson.joystick.KS)){
+    
+        }else if(!on_air){
+            P.anime.status = 'idle'
+        }
+    }
+
+    try{
+        move(this.p1)
+        move(this.p2)
+    }catch{
+        console.error('Not Load Yet')
+    }
+
+
+
+
 }
 
 SF2.prototype.makeScreen = function(){
@@ -76,6 +138,7 @@ SF2.prototype.makeScreen = function(){
 SF2.prototype.screenClear = function(){
     ctx = this.canvas.getContext('2d');
     ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+    this.drawBG()
 }
 
 SF2.prototype.createPlayer = function(N,P){
@@ -119,6 +182,14 @@ SF2.prototype.setBlood = function(P,val){
     document.getElementById(`p${P}-blood`).style.width = `${val}%`
 }
 
+SF2.prototype.drawBG = function(){
+    if (this.canvas.getContext) {
+        ctx = this.canvas.getContext('2d');
+        ctx.drawImage(this.img,0,0,this.canvas.width,this.canvas.height);
+    }
+}
+
+
 /*   PLAYER CLASS   */
 
 class SF2_Player{
@@ -127,21 +198,8 @@ class SF2_Player{
         this.name = 'X'
         this.side = 0
         this.vitally = 100
-        this.floor = 150
-        this.keys = new Object
-        this.keys.UP = 0
-        this.keys.DW = 0
-        this.keys.LF = 0
-        this.keys.RG = 0
-        this.keys.PW = 0
-        this.keys.PM = 0
-        this.keys.PS = 0
-        this.keys.KW = 0
-        this.keys.KM = 0
-        this.keys.KS = 0
+        this.floor = 180
         this.pos = [0,60]
-
-        this.move_direct = 'S'
 
         this.anime = new Object
             this.anime.status = 'idle'
@@ -149,11 +207,10 @@ class SF2_Player{
             this.anime.frame_direction = 0
             this.anime.fps = 0.2
             this.anime.fps_count = 0
-            this.anime.wait = 0
 
         this.jmp = new Object
             this.jmp.on_air = 0
-            this.jmp.max_height = 80
+            this.jmp.max_height = 70
             this.jmp.up = 0
             this.jmp.pixels = 5
 
@@ -165,22 +222,25 @@ class SF2_Player{
 
 SF2_Player.prototype.frameMotion = function(){
     const player = this
+    player.anime.frame = player.anime.frame >= player.spritejson[player.anime.status].length ? 0 : player.anime.frame
 
     function coil(){
-        player.anime.frame += player.anime.frame_direction ? -1 : 1
+        player.anime.frame += player.anime.frame_direction && player.anime.frame>0 ? -1 : 1
         player.anime.frame_direction = [0,player.spritejson[player.anime.status].length-1].includes(player.anime.frame) ? !player.anime.frame_direction : player.anime.frame_direction
     }
 
     function repeat(){
         player.anime.frame += 1
-        player.anime.frame = player.anime.frame == player.spritejson[player.anime.status].length ? 0 : player.anime.frame
+//        player.anime.frame = player.anime.frame >= player.spritejson[player.anime.status].length ? 0 : player.anime.frame
     }
 
     function once(){
-        player.anime.frame += player.anime.frame < player.spritejson[player.anime.status].length-1 ? (player.anime.frame_direction ? -1 : 1 ): 0
+        player.anime.frame += player.anime.frame < player.spritejson[player.anime.status].length-1 ? (player.anime.frame_direction && player.anime.frame>0 ? -1 : 1 ): 0
     }
 
     this.anime.fps_count += this.anime.fps
+
+//console.log(player.anime.frame)
 
     // Sprite Frame Motion
     if(this.anime.fps_count >= 1){
@@ -208,48 +268,9 @@ SF2_Player.prototype.frameMotion = function(){
 
     this.jump()
     this.draw()
-    this.move()
+//    this.move()
 }
 
-SF2_Player.prototype.joystick = function(key,press=1){
-
-    if(!this.jmp.on_air){
-        switch(key){
-            case this.spritejson.joystick.UP:
-//                this.keys.UP = press 
-                this.jmp.up = 1
-            break
-            case this.spritejson.joystick.DW:
-                this.keys.DW = press 
-            break
-            case this.spritejson.joystick.LF:
-                this.keys.LF = press 
-            break
-            case this.spritejson.joystick.RG:
-                this.keys.RG = press 
-            break
-            case this.spritejson.joystick.PW:
-                this.keys.PW = press 
-            break
-            case this.spritejson.joystick.PM:
-                this.keys.PM = press 
-            break
-            case this.spritejson.joystick.PS:
-                this.keys.PS = press 
-            break
-            case this.spritejson.joystick.KW:
-                this.keys.KW = press 
-            break
-            case this.spritejson.joystick.KM:
-                this.keys.KM = press 
-            break
-            case this.spritejson.joystick.KS:
-                this.keys.KS = press 
-            break
-        }
-    }
-    console.log(this.keys)
-}
 
 SF2_Player.prototype.jump = function(){
     if(this.pos[1] < this.floor || this.jmp.up){
@@ -258,10 +279,10 @@ SF2_Player.prototype.jump = function(){
         this.jmp.up = (this.floor - this.pos[1]) > this.jmp.max_height ? 0 : this.jmp.up
 //        this.anime.status = 'jump'
     }else{
-        this.jmp.on_air = 0
         this.pos[1] = this.floor
-//        this.anime.frame = 0
-        this.anime.status = 'idle'
+        this.anime.frame = this.jmp.on_air ? 0 : this.anime.frame
+        this.jmp.on_air = 0
+//        this.anime.status = 'idle'
     }
 }
 
@@ -274,7 +295,7 @@ SF2_Player.prototype.draw = function(){
         const flip_x = this.side ?0:w/2*-1
         const scale_x = this.side?1:-1
         const pos_x = (this.pos[0]*(this.side ?1:(-1*this.scale))) - w/2
-        const pos_y = this.pos[1]
+        const pos_y = this.pos[1] //* this.scale
     
     //x  * (this.side?1:-1) 
     
