@@ -20,6 +20,7 @@ class SF2{
         this.p2 = p2
         this.fps = 60
         this.clockCount = 0
+        this.screen_x = 100
         this.makeScreen()
         this.createPlayer(1,p1)
         this.createPlayer(2,p2)
@@ -171,7 +172,7 @@ SF2.prototype.setScore = function(){
 
 SF2.prototype.setClock = function(){
     this.clockCount += 1000/this.fps
-    if(this.clockCount >= 1000){
+    if(this.clockCount >= 1000 && this.time > 0){
         this.clockCount = 0
         this.time --
         this.screen.querySelector('#time').innerHTML = this.time
@@ -185,7 +186,7 @@ SF2.prototype.setBlood = function(P,val){
 SF2.prototype.drawBG = function(){
     if (this.canvas.getContext) {
         ctx = this.canvas.getContext('2d');
-        ctx.drawImage(this.img,0,0,this.canvas.width,this.canvas.height);
+        ctx.drawImage(this.img,0,0,7000,1230,-this.screen_x,0,1000,this.canvas.height);
     }
 }
 
